@@ -2,16 +2,45 @@ const { useState, useEffect } = React;
 const SERVER = 'http://localhost:3000';
 
 const TYPE_OPTIONS = [
-  { id: 'text', label: 'Text' },
-  { id: 'image', label: 'Image (src)' },
-  { id: 'price', label: 'Price (text)' },
-  { id: 'availability', label: 'Availability (text)' },
-  { id: 'html', label: 'Raw HTML' },
-  { id: 'link', label: 'Link (href)' },
-  { id: 'title', label: 'Title attr' },
+  { id: 'text', label: '📝 Text' },
+  { id: 'image', label: '🖼️ Image' },
+  { id: 'price', label: '💰 Price' },
+  { id: 'availability', label: '✅ Availability' },
+  { id: 'html', label: '📄 HTML' },
+  { id: 'link', label: '🔗 Link' },
+  { id: 'title', label: '📌 Title' },
+  { id: 'container', label: '📦 Container' },
 ];
 
+// Required checkbox component
+function RequiredCheckbox({ checked, onChange }) {
+  return (
+    <label style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={e => onChange(e.target.checked)}
+        style={{ width: 14, height: 14 }}
+      />
+      <span style={{ fontSize: 10, color: '#64748b' }}>Required</span>
+    </label>
+  );
+}
+
 // ── Tiny UI components ───────────────────────────────────────────────────────
+
+function FieldIcon({ type }) {
+  const icons = {
+    text: '📝',
+    image: '🖼️',
+    price: '💰',
+    link: '🔗',
+    html: '📄',
+    title: '📌',
+    availability: '✅'
+  };
+  return <span style={{ fontSize: 14, marginRight: 4 }}>{icons[type] || '📋'}</span>;
+}
 
 function Badge({ count }) {
   return (
@@ -65,9 +94,9 @@ function App() {
   const [fields, setFields] = useState(() => {
     const now = Date.now();
     return [
-      { id: String(now) + '_name', name: 'Name', type: 'text', selector: '', preview: '' },
-      { id: String(now) + '_price', name: 'Price', type: 'price', selector: '', preview: '' },
-      { id: String(now) + '_image', name: 'Image', type: 'image', selector: '', preview: '' },
+      { id: String(now) + '_name', name: 'Name', type: 'text', selector: '', preview: '', required: true },
+      { id: String(now) + '_price', name: 'Price', type: 'price', selector: '', preview: '', required: false },
+      { id: String(now) + '_image', name: 'Image', type: 'image', selector: '', preview: '', required: false },
     ];
   });
   const [limit, setLimit] = useState(20);
@@ -192,6 +221,19 @@ useEffect(() => {
   };
 
   const removeField = (fieldId) => setFields(prev => prev.filter(f => f.id !== fieldId));
+
+  const [showAddField, setShowAddField] = useState(false);
+  const [newFieldName, setNewFieldName] = useState('');
+  const [newFieldType, setNewFieldType] = useState('text');
+
+  const handleAddField = () => {
+    if (!newFieldName.trim()) return;
+    const id = String(Date.now()) + '_' + Math.random().toString(16).slice(2);
+    setFields(prev => [...prev, { id, name: newFieldName.trim(), type: newFieldType, selector: '', preview: '', required: false }]);
+    setNewFieldName('');
+    setNewFieldType('text');
+    setShowAddField(false);
+  };
 
   const addField = () => {
     const name = prompt('Field name (output key):');
@@ -428,7 +470,7 @@ useEffect(() => {
             }}>
               + Preset
             </button>
-            <button onClick={addField} style={{
+            <button onClick={() => setShowAddField(true)} style={{
               padding: '8px 10px',
               background: 'transparent',
               border: '1px solid #2d3748',
@@ -441,6 +483,37 @@ useEffect(() => {
               + Add Field
             </button>
           </div>
+
+          {showAddField && (
+            <div style={{ background: '#1a1f2e', border: '1px solid #6366f1', borderRadius: 8, padding: '10px 12px', marginBottom: 10 }}>
+              <input
+                type="text"
+                value={newFieldName}
+                onChange={e => setNewFieldName(e.target.value)}
+                placeholder="Field name"
+                autoFocus
+                style={{ width: '100%', padding: '8px', background: '#0a0d14', border: '1px solid #2d3748', borderRadius: 6, color: '#e2e8f0', fontSize: 12, marginBottom: 8, outline: 'none' }}
+              />
+              <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                <select
+                  value={newFieldType}
+                  onChange={e => setNewFieldType(e.target.value)}
+                  style={{ flex: 1, padding: '6px 8px', background: '#0a0d14', border: '1px solid #2d3748', borderRadius: 6, color: '#e2e8f0', fontSize: 12 }}
+                >
+                  <option value="text">📝 Text</option>
+                  <option value="image">🖼️ Image</option>
+                  <option value="price">💰 Price</option>
+                  <option value="link">🔗 Link</option>
+                  <option value="html">📄 HTML</option>
+                  <option value="title">📌 Title</option>
+                  <option value="availability">✅ Availability</option>
+                  <option value="container">📦 Container</option>
+                </select>
+                <button onClick={handleAddField} style={{ flex: 1, padding: '6px 12px', background: '#6366f1', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, cursor: 'pointer' }}>Add</button>
+                <button onClick={() => { setShowAddField(false); setNewFieldName(''); setNewFieldType('text'); }} style={{ flex: 1, padding: '6px 12px', background: 'transparent', color: '#64748b', border: '1px solid #2d3748', borderRadius: 6, fontSize: 12, cursor: 'pointer' }}>Cancel</button>
+              </div>
+            </div>
+          )}
 
           {fields.map((f, idx) => (
             <div key={f.id} style={{
@@ -482,7 +555,9 @@ useEffect(() => {
 
               <div style={{ display: 'flex', gap: 10, marginBottom: 8 }}>
                 <div style={{ width: 140 }}>
-                  <label style={{ display: 'block', fontSize: 11, color: '#64748b', marginBottom: 4 }}>Type</label>
+                  <label style={{ display: 'block', fontSize: 11, color: '#64748b', marginBottom: 4 }}>
+                    <FieldIcon type={f.type} /> Type
+                  </label>
                   <select
                     value={f.type}
                     onChange={e => updateField(f.id, { type: e.target.value })}
@@ -501,6 +576,17 @@ useEffect(() => {
                       <option key={t.id} value={t.id}>{t.label}</option>
                     ))}
                   </select>
+                  <div style={{ marginTop: 4 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={f.required || false}
+                        onChange={e => updateField(f.id, { required: e.target.checked })}
+                        style={{ width: 14, height: 14 }}
+                      />
+                      <span style={{ fontSize: 10, color: '#64748b' }}>Required</span>
+                    </label>
+                  </div>
                 </div>
 
                 <div style={{ flex: 1 }}>

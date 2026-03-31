@@ -5,29 +5,79 @@ const {
 const SERVER = 'http://localhost:3000';
 const TYPE_OPTIONS = [{
   id: 'text',
-  label: 'Text'
+  label: '📝 Text'
 }, {
   id: 'image',
-  label: 'Image (src)'
+  label: '🖼️ Image'
 }, {
   id: 'price',
-  label: 'Price (text)'
+  label: '💰 Price'
 }, {
   id: 'availability',
-  label: 'Availability (text)'
+  label: '✅ Availability'
 }, {
   id: 'html',
-  label: 'Raw HTML'
+  label: '📄 HTML'
 }, {
   id: 'link',
-  label: 'Link (href)'
+  label: '🔗 Link'
 }, {
   id: 'title',
-  label: 'Title attr'
+  label: '📌 Title'
+}, {
+  id: 'container',
+  label: '📦 Container'
 }];
+
+// Required checkbox component
+function RequiredCheckbox({
+  checked,
+  onChange
+}) {
+  return /*#__PURE__*/React.createElement("label", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 4,
+      cursor: 'pointer'
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "checkbox",
+    checked: checked,
+    onChange: e => onChange(e.target.checked),
+    style: {
+      width: 14,
+      height: 14
+    }
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 10,
+      color: '#64748b'
+    }
+  }, "Required"));
+}
 
 // ── Tiny UI components ───────────────────────────────────────────────────────
 
+function FieldIcon({
+  type
+}) {
+  const icons = {
+    text: '📝',
+    image: '🖼️',
+    price: '💰',
+    link: '🔗',
+    html: '📄',
+    title: '📌',
+    availability: '✅'
+  };
+  return /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 14,
+      marginRight: 4
+    }
+  }, icons[type] || '📋');
+}
 function Badge({
   count
 }) {
@@ -116,19 +166,22 @@ function App() {
       name: 'Name',
       type: 'text',
       selector: '',
-      preview: ''
+      preview: '',
+      required: true
     }, {
       id: String(now) + '_price',
       name: 'Price',
       type: 'price',
       selector: '',
-      preview: ''
+      preview: '',
+      required: false
     }, {
       id: String(now) + '_image',
       name: 'Image',
       type: 'image',
       selector: '',
-      preview: ''
+      preview: '',
+      required: false
     }];
   });
   const [limit, setLimit] = useState(20);
@@ -291,6 +344,24 @@ function App() {
     } : f));
   };
   const removeField = fieldId => setFields(prev => prev.filter(f => f.id !== fieldId));
+  const [showAddField, setShowAddField] = useState(false);
+  const [newFieldName, setNewFieldName] = useState('');
+  const [newFieldType, setNewFieldType] = useState('text');
+  const handleAddField = () => {
+    if (!newFieldName.trim()) return;
+    const id = String(Date.now()) + '_' + Math.random().toString(16).slice(2);
+    setFields(prev => [...prev, {
+      id,
+      name: newFieldName.trim(),
+      type: newFieldType,
+      selector: '',
+      preview: '',
+      required: false
+    }]);
+    setNewFieldName('');
+    setNewFieldType('text');
+    setShowAddField(false);
+  };
   const addField = () => {
     const name = prompt('Field name (output key):');
     if (!name) return;
@@ -654,7 +725,7 @@ function App() {
       cursor: 'pointer'
     }
   }, "+ Preset"), /*#__PURE__*/React.createElement("button", {
-    onClick: addField,
+    onClick: () => setShowAddField(true),
     style: {
       padding: '8px 10px',
       background: 'transparent',
@@ -665,7 +736,94 @@ function App() {
       fontWeight: 600,
       cursor: 'pointer'
     }
-  }, "+ Add Field")), fields.map((f, idx) => /*#__PURE__*/React.createElement("div", {
+  }, "+ Add Field")), showAddField && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: '#1a1f2e',
+      border: '1px solid #6366f1',
+      borderRadius: 8,
+      padding: '10px 12px',
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "text",
+    value: newFieldName,
+    onChange: e => setNewFieldName(e.target.value),
+    placeholder: "Field name",
+    autoFocus: true,
+    style: {
+      width: '100%',
+      padding: '8px',
+      background: '#0a0d14',
+      border: '1px solid #2d3748',
+      borderRadius: 6,
+      color: '#e2e8f0',
+      fontSize: 12,
+      marginBottom: 8,
+      outline: 'none'
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 8,
+      marginBottom: 8
+    }
+  }, /*#__PURE__*/React.createElement("select", {
+    value: newFieldType,
+    onChange: e => setNewFieldType(e.target.value),
+    style: {
+      flex: 1,
+      padding: '6px 8px',
+      background: '#0a0d14',
+      border: '1px solid #2d3748',
+      borderRadius: 6,
+      color: '#e2e8f0',
+      fontSize: 12
+    }
+  }, /*#__PURE__*/React.createElement("option", {
+    value: "text"
+  }, "\uD83D\uDCDD Text"), /*#__PURE__*/React.createElement("option", {
+    value: "image"
+  }, "\uD83D\uDDBC\uFE0F Image"), /*#__PURE__*/React.createElement("option", {
+    value: "price"
+  }, "\uD83D\uDCB0 Price"), /*#__PURE__*/React.createElement("option", {
+    value: "link"
+  }, "\uD83D\uDD17 Link"), /*#__PURE__*/React.createElement("option", {
+    value: "html"
+  }, "\uD83D\uDCC4 HTML"), /*#__PURE__*/React.createElement("option", {
+    value: "title"
+  }, "\uD83D\uDCCC Title"), /*#__PURE__*/React.createElement("option", {
+    value: "availability"
+  }, "\u2705 Availability"), /*#__PURE__*/React.createElement("option", {
+    value: "container"
+  }, "\uD83D\uDCE6 Container")), /*#__PURE__*/React.createElement("button", {
+    onClick: handleAddField,
+    style: {
+      flex: 1,
+      padding: '6px 12px',
+      background: '#6366f1',
+      color: '#fff',
+      border: 'none',
+      borderRadius: 6,
+      fontSize: 12,
+      cursor: 'pointer'
+    }
+  }, "Add"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setShowAddField(false);
+      setNewFieldName('');
+      setNewFieldType('text');
+    },
+    style: {
+      flex: 1,
+      padding: '6px 12px',
+      background: 'transparent',
+      color: '#64748b',
+      border: '1px solid #2d3748',
+      borderRadius: 6,
+      fontSize: 12,
+      cursor: 'pointer'
+    }
+  }, "Cancel"))), fields.map((f, idx) => /*#__PURE__*/React.createElement("div", {
     key: f.id,
     style: {
       background: '#1a1f2e',
@@ -735,7 +893,9 @@ function App() {
       color: '#64748b',
       marginBottom: 4
     }
-  }, "Type"), /*#__PURE__*/React.createElement("select", {
+  }, /*#__PURE__*/React.createElement(FieldIcon, {
+    type: f.type
+  }), " Type"), /*#__PURE__*/React.createElement("select", {
     value: f.type,
     onChange: e => updateField(f.id, {
       type: e.target.value
@@ -753,7 +913,33 @@ function App() {
   }, TYPE_OPTIONS.map(t => /*#__PURE__*/React.createElement("option", {
     key: t.id,
     value: t.id
-  }, t.label)))), /*#__PURE__*/React.createElement("div", {
+  }, t.label))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 4
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 4,
+      cursor: 'pointer'
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "checkbox",
+    checked: f.required || false,
+    onChange: e => updateField(f.id, {
+      required: e.target.checked
+    }),
+    style: {
+      width: 14,
+      height: 14
+    }
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 10,
+      color: '#64748b'
+    }
+  }, "Required")))), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1
     }
