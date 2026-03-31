@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Visual Web Scraper",
+  "version": "2.0",
+  "permissions": ["activeTab", "scripting", "storage", "tabs"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["react.min.js", "react-dom.min.js", "popup.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
