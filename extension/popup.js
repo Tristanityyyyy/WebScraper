@@ -194,6 +194,7 @@ function App() {
     type: ''
   });
   const [saved, setSaved] = useState(false);
+  const [jobId, setJobId] = useState(null);
   const [currentUrl, setCurrentUrl] = useState('');
   useEffect(() => {
     let poll = null;
@@ -483,6 +484,7 @@ function App() {
   const clearResults = () => {
     setResults([]);
     setSaved(false);
+    setJobId(null);
     setStatus({
       msg: 'Pick fields and scrape again',
       type: ''
@@ -588,6 +590,7 @@ function App() {
       const data = await res.json();
       if (data.success) {
         setSaved(true);
+        setJobId(data.jobId);
         setStatus({
           msg: `Saved ${results.length} rows (job #${data.jobId})`,
           type: 'success'
@@ -604,6 +607,14 @@ function App() {
         type: 'error'
       });
     }
+  };
+  const exportCsv = () => {
+    if (!jobId) return;
+    window.open(`${SERVER}/api/export/${jobId}/csv`, '_blank');
+  };
+  const exportPdf = () => {
+    if (!jobId) return;
+    window.open(`${SERVER}/api/export/${jobId}/pdf`, '_blank');
   };
   const reset = () => {
     const now = Date.now();
@@ -631,6 +642,7 @@ function App() {
     setMaxPages(50);
     setResults([]);
     setSaved(false);
+    setJobId(null);
     setCurrentUrl('');
     nextSelectorLoaded.current = false;
     nextSelectorInitialized.current = false;
@@ -1136,7 +1148,39 @@ function App() {
       fontSize: 12,
       cursor: 'pointer'
     }
-  }, "Clear")), results.length > 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  }, "Clear")), saved && jobId && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 8,
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: exportCsv,
+    style: {
+      flex: 1,
+      padding: '8px',
+      background: '#1a2a1a',
+      border: '1px solid #10b981',
+      borderRadius: 8,
+      color: '#10b981',
+      fontSize: 12,
+      fontWeight: 600,
+      cursor: 'pointer'
+    }
+  }, "📥 Export CSV"), /*#__PURE__*/React.createElement("button", {
+    onClick: exportPdf,
+    style: {
+      flex: 1,
+      padding: '8px',
+      background: '#1a2a1a',
+      border: '1px solid #10b981',
+      borderRadius: 8,
+      color: '#10b981',
+      fontSize: 12,
+      fontWeight: 600,
+      cursor: 'pointer'
+    }
+  }, "📄 Export PDF")), results.length > 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: '#64748b',
