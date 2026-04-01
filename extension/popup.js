@@ -194,8 +194,10 @@ function App() {
     type: ''
   });
   const [saved, setSaved] = useState(false);
-  const [jobId, setJobId] = useState(null);
   const [currentUrl, setCurrentUrl] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [jobId, setJobId] = useState(null);
+  const ITEMS_PER_PAGE = 10;
   useEffect(() => {
     let poll = null;
     let initialLoadDone = false;
@@ -485,6 +487,7 @@ function App() {
     setResults([]);
     setSaved(false);
     setJobId(null);
+    setCurrentPage(1);
     setStatus({
       msg: 'Pick fields and scrape again',
       type: ''
@@ -538,6 +541,7 @@ function App() {
       }
       const res = response?.results || [];
       setResults(res);
+      setCurrentPage(1);
       if (!res.length) {
         const counts = response?.counts;
         const countMsg = Array.isArray(counts) && counts.length ? ` Selector matches: ${fieldSelectors.map((f, i) => `${f.name}=${counts[i] ?? 0}`).slice(0, 5).join(', ')}.` : '';
@@ -608,11 +612,11 @@ function App() {
       });
     }
   };
-  const exportCsv = () => {
+  const exportCSV = () => {
     if (!jobId) return;
     window.open(`${SERVER}/api/export/${jobId}/csv`, '_blank');
   };
-  const exportPdf = () => {
+  const exportPDF = () => {
     if (!jobId) return;
     window.open(`${SERVER}/api/export/${jobId}/pdf`, '_blank');
   };
@@ -652,6 +656,15 @@ function App() {
     });
     chrome.storage.local.remove(['scraperState', 'pickedFieldSelector', 'pickedNextSelector', 'nextSelectorState']);
   };
+  const totalPages = Math.ceil(results.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedResults = results.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const goToPage = page => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+  const resetPage = () => setCurrentPage(1);
   return /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
@@ -1137,7 +1150,31 @@ function App() {
       fontWeight: 600,
       cursor: results.length ? 'pointer' : 'default'
     }
-  }, saved ? 'Saved ✓' : 'Save to DB'), /*#__PURE__*/React.createElement("button", {
+  }, saved ? 'Saved ✓' : 'Save to DB'), jobId && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
+    onClick: exportCSV,
+    style: {
+      padding: '9px 12px',
+      background: '#1e3a5f',
+      color: '#60a5fa',
+      border: '1px solid #3b82f6',
+      borderRadius: 8,
+      fontSize: 12,
+      fontWeight: 600,
+      cursor: 'pointer'
+    }
+  }, "Export CSV"), /*#__PURE__*/React.createElement("button", {
+    onClick: exportPDF,
+    style: {
+      padding: '9px 12px',
+      background: '#3d1e1e',
+      color: '#f87171',
+      border: '1px solid #ef4444',
+      borderRadius: 8,
+      fontSize: 12,
+      fontWeight: 600,
+      cursor: 'pointer'
+    }
+  }, "Export PDF")), /*#__PURE__*/React.createElement("button", {
     onClick: clearResults,
     style: {
       padding: '9px 14px',
@@ -1148,49 +1185,55 @@ function App() {
       fontSize: 12,
       cursor: 'pointer'
     }
-  }, "Clear")), saved && jobId && /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      gap: 8,
-      marginBottom: 12
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: exportCsv,
-    style: {
-      flex: 1,
-      padding: '8px',
-      background: '#1a2a1a',
-      border: '1px solid #10b981',
-      borderRadius: 8,
-      color: '#10b981',
-      fontSize: 12,
-      fontWeight: 600,
-      cursor: 'pointer'
-    }
-  }, "📥 Export CSV"), /*#__PURE__*/React.createElement("button", {
-    onClick: exportPdf,
-    style: {
-      flex: 1,
-      padding: '8px',
-      background: '#1a2a1a',
-      border: '1px solid #10b981',
-      borderRadius: 8,
-      color: '#10b981',
-      fontSize: 12,
-      fontWeight: 600,
-      cursor: 'pointer'
-    }
-  }, "📄 Export PDF")), results.length > 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  }, "Clear")), results.length > 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: '#64748b',
       marginBottom: 8
     }
-  }, "Results (", results.length, ")"), results.map((row, i) => /*#__PURE__*/React.createElement(ResultCard, {
-    key: i,
+  }, "Results (", startIndex + 1, "-", Math.min(startIndex + ITEMS_PER_PAGE, results.length), " of ", results.length, ")"), paginatedResults.map((row, i) => /*#__PURE__*/React.createElement(ResultCard, {
+    key: startIndex + i,
     row: row,
-    index: i
-  })))), /*#__PURE__*/React.createElement(StatusBar, {
+    index: startIndex + i
+  })), totalPages > 1 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: 6,
+      marginTop: 12
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => goToPage(currentPage - 1),
+    disabled: currentPage === 1,
+    style: {
+      padding: '6px 12px',
+      background: currentPage === 1 ? '#1a1f2e' : '#2d3748',
+      border: '1px solid #2d3748',
+      color: currentPage === 1 ? '#4a5568' : '#e2e8f0',
+      borderRadius: 6,
+      fontSize: 11,
+      cursor: currentPage === 1 ? 'default' : 'pointer'
+    }
+  }, "Prev"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: '#64748b',
+      padding: '0 8px'
+    }
+  }, "Page ", currentPage, " of ", totalPages), /*#__PURE__*/React.createElement("button", {
+    onClick: () => goToPage(currentPage + 1),
+    disabled: currentPage === totalPages,
+    style: {
+      padding: '6px 12px',
+      background: currentPage === totalPages ? '#1a1f2e' : '#2d3748',
+      border: '1px solid #2d3748',
+      color: currentPage === totalPages ? '#4a5568' : '#e2e8f0',
+      borderRadius: 6,
+      fontSize: 11,
+      cursor: currentPage === totalPages ? 'default' : 'pointer'
+    }
+  }, "Next")))), /*#__PURE__*/React.createElement(StatusBar, {
     msg: status.msg,
     type: status.type
   }));

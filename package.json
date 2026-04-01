@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build:popup": "babel extension/popup.js --out-file extension/popup.js",
+    "build:popup": "babel extension/popup.jsx --out-file extension/popup.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
